@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rota Vip Santa Maria</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(to bottom, #FF4500, #FF7F50);
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 50px auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #FF4500;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-weight: bold;
+            margin-top: 20px;
+        }
+
+        input, textarea {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        button {
+            background-color: #FF4500;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        button:hover {
+            background-color: #FF7F50;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 15% auto;
+            padding: 20px;
+            border-radius: 5px;
+            max-width: 400px;
+        }
+    </style>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDgInKKJoZGZta0l82V_TydPsCI8tv83tA&libraries=places"></script>
+    <script>
+        function initAutocomplete() {
+            var embarqueInput = document.getElementById('embarque');
+            var parada1Input = document.getElementById('parada1');
+            var parada2Input = document.getElementById('parada2');
+            var parada3Input = document.getElementById('parada3');
+            var destinoInput = document.getElementById('destino');
+
+            var embarqueAutocomplete = new google.maps.places.Autocomplete(embarqueInput);
+            var parada1Autocomplete = new google.maps.places.Autocomplete(parada1Input);
+            var parada2Autocomplete = new google.maps.places.Autocomplete(parada2Input);
+            var parada3Autocomplete = new google.maps.places.Autocomplete(parada3Input);
+            var destinoAutocomplete = new google.maps.places.Autocomplete(destinoInput);
+        }
+
+        function submitForm() {
+            var embarque = document.getElementById('embarque').value;
+            var parada1 = document.getElementById('parada1').value;
+            var parada2 = document.getElementById('parada2').value;
+            var parada3 = document.getElementById('parada3').value;
+            var destino = document.getElementById('destino').value;
+
+            // Cria o payload padrão
+            var payload = {
+                type: "form_submission",
+                data: {
+                    embarque: embarque,
+                    parada1: parada1,
+                    parada2: parada2,
+                    parada3: parada3,
+                    destino: destino
+                }
+            };
+
+            fetch('http://host.docker.internal:5678/webhook/formularioofic', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(response => {
+                // Exibe a modal de sucesso
+                var modal = document.getElementById("myModal");
+                modal.style.display = "block";
+
+                // Adiciona o evento de clique no botão "OK"
+                var okButton = document.getElementById("okButton");
+                okButton.addEventListener("click", function() {
+                    modal.style.display = "none";
+                });
+            })
+            .catch(error => {
+                console.error('Erro ao enviar o formulário:', error);
+            });
+        }
+    </script>
+</head>
+<body onload="initAutocomplete()">
+    <div class="container">
+        <h1>Rota Vip Santa Maria</h1>
+        <form onsubmit="event.preventDefault(); submitForm();">
+            <label for="embarque">Endereço de Embarque:</label>
+            <input type="text" id="embarque" name="embarque" placeholder="Digite o endereço de embarque" required>
+
+            <label for="parada1">1ª Parada:</label>
+            <input type="text" id="parada1" name="parada1" placeholder="Adicione o endereço da 1ª parada (opcional)">
+
+            <label for="parada2">2ª Parada:</label>
+            <input type="text" id="parada2" name="parada2" placeholder="Adicione o endereço da 2ª parada (opcional)">
+
+            <label for="parada3">3ª Parada:</label>
+            <input type="text" id="parada3" name="parada3" placeholder="Adicione o endereço da 3ª parada (opcional)">
+
+            <label for="destino">Destino Final:</label>
+            <input type="text" id="destino" name="destino" placeholder="Digite o endereço de desembarque" required>
+
+            <button type="submit">Enviar</button>
+        </form>
+    </div>
+
+    <!-- Modal de sucesso -->
+    <div id="myModal" class="modal">
+        <div class="modal-content">
+            <h2>Dados enviados com sucesso!</h2>
+            <button id="okButton">OK</button>
+        </div>
+    </div>
+</body>
+</html>
