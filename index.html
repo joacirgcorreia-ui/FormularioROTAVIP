@@ -41,6 +41,7 @@
             border: 1px solid #ccc;
             border-radius: 5px;
             font-size: 16px;
+            margin-top: 5px;
         }
 
         button {
@@ -58,6 +59,11 @@
             background-color: #FF7F50;
         }
 
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
         .modal {
             display: none;
             position: fixed;
@@ -73,9 +79,28 @@
         .modal-content {
             background-color: white;
             margin: 15% auto;
-            padding: 20px;
-            border-radius: 5px;
+            padding: 30px;
+            border-radius: 10px;
             max-width: 400px;
+            text-align: center;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-content h2 {
+            color: #FF4500;
+            margin-top: 0;
+        }
+
+        .modal-content button {
+            margin-top: 15px;
+            width: 100px;
+        }
+
+        .error {
+            color: red;
+            text-align: center;
+            margin-top: 10px;
+            display: none;
         }
     </style>
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDgInKKJoZGZta0l82V_TydPsCI8tv83tA&libraries=places"></script>
@@ -87,11 +112,11 @@
             var parada3Input = document.getElementById('parada3');
             var destinoInput = document.getElementById('destino');
 
-            var embarqueAutocomplete = new google.maps.places.Autocomplete(embarqueInput);
-            var parada1Autocomplete = new google.maps.places.Autocomplete(parada1Input);
-            var parada2Autocomplete = new google.maps.places.Autocomplete(parada2Input);
-            var parada3Autocomplete = new google.maps.places.Autocomplete(parada3Input);
-            var destinoAutocomplete = new google.maps.places.Autocomplete(destinoInput);
+            new google.maps.places.Autocomplete(embarqueInput);
+            new google.maps.places.Autocomplete(parada1Input);
+            new google.maps.places.Autocomplete(parada2Input);
+            new google.maps.places.Autocomplete(parada3Input);
+            new google.maps.places.Autocomplete(destinoInput);
         }
 
         function submitForm() {
@@ -101,42 +126,91 @@
             var parada3 = document.getElementById('parada3').value;
             var destino = document.getElementById('destino').value;
 
-            // Enviar os dados para a planilha do Google
-            var sheetUrl = 'https://sheets.googleapis.com/v4/spreadsheets/1i6WMeDcqsDhXIFiClh1GnluymB1W89zuLS7AUM4Q33Q/values/Sheet1!A1:E1:append?valueInputOption=USER_ENTERED&key=AIzaSyDgInKKJoZGZta0l82V_TydPsCI8tv83tA';
+            var button = document.querySelector('button[type="submit"]');
+            var errorMsg = document.getElementById('errorMsg');
+            
+            button.disabled = true;
+            button.textContent = 'Enviando...';
+            errorMsg.style.display = 'none';
+
+            // ⚠️ COLE AQUI A URL DA SUA API DO SHEETDB
+            var sheetDbUrl = 'https://sheetdb.io/api/v1/9k15h1w8ibjih';
+            
+            // Formata a data e hora atual
+            var dataHora = new Date().toLocaleString('pt-BR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
             var data = {
-                values: [[embarque, parada1, parada2, parada3, destino]]
+                "Data/Hora": dataHora,
+                "Embarque": embarque,
+                "Parada 1": parada1,
+                "Parada 2": parada2,
+                "Parada 3": parada3,
+                "Destino": destino
             };
 
-            fetch(sheetUrl, {
+            fetch(sheetDbUrl, {
                 method: 'POST',
                 headers: {
+                    'Accept': 'application/json',
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(data)
             })
             .then(response => {
+                if (!response.ok) {
+                    throw new Error('Erro ao enviar dados');
+                }
+                return response.json();
+            })
+            .then(result => {
+                console.log('Sucesso:', result);
+                
                 // Exibe a modal de sucesso
                 var modal = document.getElementById("myModal");
                 modal.style.display = "block";
 
-                // Adiciona o evento de clique no botão "OK"
-                var okButton = document.getElementById("okButton");
-                okButton.addEventListener("click", function() {
-                    modal.style.display = "none";
-                    window.close(); // Fecha a página automaticamente
-                });
+                // Limpa o formulário
+                document.querySelector('form').reset();
+                
+                button.disabled = false;
+                button.textContent = 'Enviar';
             })
             .catch(error => {
-                console.error('Erro ao enviar os dados:', error);
+                console.error('Erro:', error);
+                errorMsg.textContent = 'Erro ao enviar os dados. Verifique sua conexão e tente novamente.';
+                errorMsg.style.display = 'block';
+                
+                button.disabled = false;
+                button.textContent = 'Enviar';
             });
+        }
+
+        function fecharPagina() {
+            // Fecha o modal primeiro
+            document.getElementById('myModal').style.display = 'none';
+            
+            // Tenta fechar a janela/aba
+            window.close();
+            
+            // Se não conseguir fechar (por questões de segurança do navegador),
+            // redireciona para uma página em branco
+            setTimeout(function() {
+                window.location.href = 'about:blank';
+            }, 100);
         }
     </script>
 </head>
 <body onload="initAutocomplete()">
     <div class="container">
-        <h1>Rota Vip Santa Maria</h1>
+        <h1>🚗 Rota Vip Santa Maria</h1>
         <form onsubmit="event.preventDefault(); submitForm();">
-            <label for="embarque">Endereço de Embarque:</label>
+            <label for="embarque">Endereço de Embarque: *</label>
             <input type="text" id="embarque" name="embarque" placeholder="Digite o endereço de embarque" required>
 
             <label for="parada1">1ª Parada:</label>
@@ -148,18 +222,22 @@
             <label for="parada3">3ª Parada:</label>
             <input type="text" id="parada3" name="parada3" placeholder="Adicione o endereço da 3ª parada (opcional)">
 
-            <label for="destino">Destino Final:</label>
+            <label for="destino">Destino Final: *</label>
             <input type="text" id="destino" name="destino" placeholder="Digite o endereço de desembarque" required>
 
             <button type="submit">Enviar</button>
+            
+            <div id="errorMsg" class="error"></div>
         </form>
     </div>
 
     <!-- Modal de sucesso -->
     <div id="myModal" class="modal">
         <div class="modal-content">
-            <h2>Dados enviados com sucesso!</h2>
-            <button id="okButton">OK</button>
+            <h2>✅ Sucesso!</h2>
+            <p>Seus dados foram enviados com sucesso!</p>
+            <p>Sua rota foi registrada.</p>
+            <button id="okButton" onclick="fecharPagina()">OK</button>
         </div>
     </div>
 </body>
