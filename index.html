@@ -101,24 +101,18 @@
             var parada3 = document.getElementById('parada3').value;
             var destino = document.getElementById('destino').value;
 
-            // Cria o payload padrão
-            var payload = {
-                type: "form_submission",
-                data: {
-                    embarque: embarque,
-                    parada1: parada1,
-                    parada2: parada2,
-                    parada3: parada3,
-                    destino: destino
-                }
+            // Enviar os dados para a planilha do Google
+            var sheetUrl = 'https://docs.google.com/spreadsheets/d/1i6WMeDcqsDhXIFiClh1GnluymB1W89zuLS7AUM4Q33Q/gviz/tq?tqx=out:json';
+            var data = {
+                values: [[embarque, parada1, parada2, parada3, destino]]
             };
 
-            fetch('http://host.docker.internal:5678/webhook/formularioofic', {
+            fetch(sheetUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(payload)
+                body: JSON.stringify(data)
             })
             .then(response => {
                 // Exibe a modal de sucesso
@@ -129,10 +123,11 @@
                 var okButton = document.getElementById("okButton");
                 okButton.addEventListener("click", function() {
                     modal.style.display = "none";
+                    window.close(); // Fecha a página automaticamente
                 });
             })
             .catch(error => {
-                console.error('Erro ao enviar o formulário:', error);
+                console.error('Erro ao enviar os dados:', error);
             });
         }
     </script>
