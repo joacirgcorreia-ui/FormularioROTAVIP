@@ -102,7 +102,7 @@
             var destino = document.getElementById('destino').value;
 
             // Enviar os dados para a planilha do Google
-            var sheetUrl = 'https://docs.google.com/spreadsheets/d/1i6WMeDcqsDhXIFiClh1GnluymB1W89zuLS7AUM4Q33Q/gviz/tq?tqx=out:json';
+            var sheetUrl = 'https://sheets.googleapis.com/v4/spreadsheets/1i6WMeDcqsDhXIFiClh1GnluymB1W89zuLS7AUM4Q33Q/values/Sheet1!A1:E1:append?valueInputOption=USER_ENTERED&key=AIzaSyDgInKKJoZGZta0l82V_TydPsCI8tv83tA';
             var data = {
                 values: [[embarque, parada1, parada2, parada3, destino]]
             };
